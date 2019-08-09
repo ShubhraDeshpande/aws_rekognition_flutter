@@ -1,0 +1,45 @@
+service: img-rec-python
+app: img-rec-python
+org: shubhra
+
+resources:
+  Resources:
+    MyS3Bucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketEncryption:
+          ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+        BucketName: 'shubhra-rekognition-${opt:stage}'
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: true
+          BlockPublicPolicy: true
+          IgnorePublicAcls: true
+          RestrictPublicBuckets: true
+
+provider:
+  name: aws
+  runtime: python2.7
+  stage: dev
+  region: us-west-2
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - lambda:InvokeFunction
+        - s3:GetObject
+      Resource: ["*"]
+        # - !GetAtt MyS3Bucket.Arn
+    - Effect: Allow
+      Action:
+        - rekognition:*
+      Resource: ["*"]
+
+functions:
+  hello:
+    handler: handler.hello
+    events:
+      - s3:
+          bucket: 'shubhra-rekognition-${opt:stage}'
+          event: s3:ObjectCreated:*
+          existing: true
